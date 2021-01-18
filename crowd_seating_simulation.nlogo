@@ -3,6 +3,8 @@ globals[
   place-chairs
   crowded-patch ;; patch where u have to right the "STAGE" label
   attendance
+  green-area     ;; agentset of blue patches representing the bar area
+  c_number ; number of seat
 ]
 
 
@@ -12,8 +14,13 @@ to setup
   set-default-shape turtles "person"
   set stage patches with [ pycor >  max-pycor - stage-height]
   ask stage [set pcolor red]
-  set place-chairs patches with [pycor <= max-pycor - stage-height ]
+
+  set place-chairs patches with [pycor <= max-pycor - stage-height and pycor > -13 ]
   ask place-chairs [set pcolor brown]
+
+    ;; create the 'bar'
+  set green-area patches with [pycor <= -14  ]
+  ask green-area [ set pcolor green ]
 
   ask patch (((max-pxcor + min-pxcor)/ 2) + 2) ((max-pycor + (max-pycor - stage-height))/ 2) [
     set crowded-patch self
@@ -22,13 +29,15 @@ to setup
    ask crowded-patch [ set plabel "STAGE" ]
 
 
+
   create-turtles n_turtles [
     set color white
     set size 1.5
+    let spawn-point  patches with [pycor <= -14 and pycor > -18 ]
     if[pcolor] of patches = black [
-      move-to-empty-one-of place-chairs
+      move-to-empty-one-of spawn-point
     ]
-    move-to-empty-one-of place-chairs
+    move-to-empty-one-of spawn-point
     ;set strategies n-values number-strategies [random-strategy]
    ; set best-strategy first strategies
   ;  update-strategies
@@ -39,6 +48,11 @@ end
 
 to go
   set attendance count turtles-on place-chairs
+
+  if attendance > chair_number [
+    ask crowded-patch [ set plabel "CROWDED" ]
+  ]
+
   if [pcolor] of patches = black [
     ask turtles  [move-to-empty-one-of place-chairs]
   ]
@@ -55,13 +69,18 @@ to choose-current
   [
     let x-mouse mouse-xcor
     let y-mouse mouse-ycor
-    if[pcolor] of patch x-mouse y-mouse = red [
+    if[pcolor] of patch x-mouse y-mouse = red or [pcolor] of patch x-mouse y-mouse = green or [pcolor] of patch x-mouse y-mouse = black [
       user-message (word "Non è possibile mettere una sedia qui")
     ]
     if[pcolor] of patch x-mouse y-mouse = brown [
-      ask patch x-mouse y-mouse [set pcolor black]
+      ask patch x-mouse y-mouse [set pcolor blue]
+      ask patch x-mouse (y-mouse - 1)[set pcolor yellow]
+      ;tick
     ]
   ]
+  set c_number count patches with [pcolor = blue]
+  show c_number
+  reset-ticks
 end
 
 ;; Nonetheless, to make a nice visualization
@@ -174,7 +193,7 @@ stage-height
 stage-height
 5
 10
-8.0
+7.0
 1
 1
 NIL
@@ -189,7 +208,7 @@ n_turtles
 n_turtles
 5
 50
-25.0
+23.0
 1
 1
 NIL
@@ -211,6 +230,21 @@ NIL
 NIL
 NIL
 1
+
+SLIDER
+795
+251
+967
+284
+chair_number
+chair_number
+1
+50
+20.0
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
