@@ -1,10 +1,11 @@
 globals[
   stage
   place-chairs
-  crowded-patch ;; patch where u have to right the "STAGE" label
+  seating-patch ;; patch where user has to place the chairs
   attendance
   green-area     ;; agentset of blue patches representing the bar area
   c_number ; number of seat
+  source-patches
 ]
 
 
@@ -12,23 +13,9 @@ globals[
 to setup
   clear-all
   set-default-shape turtles "person"
-  set stage patches with [ pycor >  max-pycor - stage-height]
-  ask stage [set pcolor red]
+  set-up-world ;inizializzazione del mondo
 
-  set place-chairs patches with [pycor <= max-pycor - stage-height and pycor > -13 ]
-  ask place-chairs [set pcolor brown]
-
-    ;; create the 'bar'
-  set green-area patches with [pycor <= -14  ]
-  ask green-area [ set pcolor green ]
-
-  ask patch (((max-pxcor + min-pxcor)/ 2) + 2) ((max-pycor + (max-pycor - stage-height))/ 2) [
-    set crowded-patch self
-    set plabel-color black
-  ]
-   ask crowded-patch [ set plabel "STAGE" ]
-
-
+;create_square
 
   create-turtles n_turtles [
     set color white
@@ -47,12 +34,6 @@ to setup
 end
 
 to go
-  set attendance count turtles-on place-chairs
-
-  if attendance > chair_number [
-    ask crowded-patch [ set plabel "CROWDED" ]
-  ]
-
   if [pcolor] of patches = black [
     ask turtles  [move-to-empty-one-of place-chairs]
   ]
@@ -92,6 +73,35 @@ to move-to-empty-one-of [locations]  ;; turtle procedure
     move-to one-of locations
   ]
 end
+
+
+to set-up-world
+  let center patch  0 0
+  ;create the stage
+  set stage patches with [ pycor >  max-pycor - 6]
+  ask stage [set pcolor red]
+
+  set place-chairs patches with [pycor <= max-pycor - 6 and pycor > -13 ]
+  ask place-chairs [set pcolor brown]
+
+    ;; create the spawn area
+  set green-area patches with [pycor <= -14  ]
+  ask green-area [ set pcolor green ]
+
+  ask patch (((max-pxcor + min-pxcor)/ 2) + 2) ((max-pycor + (max-pycor - 6))/ 2) [
+    set stage self
+    set plabel-color black
+  ]
+   ask stage [ set plabel "STAGE" ]
+
+  let pippo count patches with [pcolor = brown] with-max [pxcor]
+
+  set seating-patch [patches with [(abs(pxcor) = 13  and abs(pycor) <= 10) or ( abs(pxcor) <= 13  and abs(pycor) = 10)]] of center
+  ask seating-patch [ set pcolor gray ]
+
+
+end
+
 @#$#@#$#@
 GRAPHICS-WINDOW
 161
@@ -186,21 +196,6 @@ NIL
 
 SLIDER
 795
-157
-967
-190
-stage-height
-stage-height
-5
-10
-7.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-795
 110
 967
 143
@@ -208,7 +203,7 @@ n_turtles
 n_turtles
 5
 50
-23.0
+25.0
 1
 1
 NIL
@@ -240,7 +235,7 @@ chair_number
 chair_number
 1
 50
-20.0
+50.0
 1
 1
 NIL
