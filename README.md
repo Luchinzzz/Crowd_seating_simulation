@@ -15,7 +15,7 @@ Settare il world:
 
 Modificare comportamento persone:
 - [ ] Movimento in base ad attrazione verso il palco (la persona deve cercare il punto più vicino dove sedersi)
-- [ ] Distanza minima dal palco
+- [x] Distanza minima dal palco
 - [ ] Bloccare movimento trapassando file di sedie
 - [ ] Massima distanza fra vicini
 - [ ] Comet Haley
