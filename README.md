@@ -9,15 +9,15 @@ Netlogo project for Artificial Intelligent Systems-Intelligent Models exam.
 Settare il world:
 - [x] Chiedere all'utente grandezza palco e numero persone;
 - [x] Suddividere il mondo (palco e zona sedie);
-- [ ] Creare quadrato dove posizionare le sedie;
-- [ ] Suddividere il quadrato in righe dove l'utente inserisce le sedie;
+- [x] Creare quadrato dove posizionare le sedie;
+- [x] Suddividere il quadrato in righe dove l'utente inserisce le sedie;
 - [ ] Boh
 
 Modificare comportamento persone:
 - [ ] Movimento in base ad attrazione verso il palco (la persona deve cercare il punto più vicino dove sedersi)
 - [ ] Distanza minima dal palco
 - [ ] Bloccare movimento trapassando file di sedie
-- [ ] Neptune
+- [ ] Massima distanza fra vicini
 - [ ] Comet Haley
 
 ## General info
