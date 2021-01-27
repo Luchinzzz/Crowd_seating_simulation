@@ -41,7 +41,7 @@ to go
   ask turtles  [move-to-empty-one-of place-chairs]
   min_distance_stage
   ;; advance the clock
-  max_distance_neigh
+  ;max_distance_neigh
   tick
 end
 
@@ -70,17 +70,18 @@ end
 ;; this function allows to set a minimum distance from the stage
 ; each turtle has to stay away from it
 to min_distance_stage
-  let dis_stage (max-pycor - 6) - min_dis_stage
-  let pippo get-max-min (patches with [pcolor = red])
-  show pippo
-  ;ask turtles[ move-to-empty-one-of (pippo)]
+  let place-to-move 0
+  let dis_stage 5 + min_dis_stage
+
+  set place-to-move patches with [pycor <= max-pycor - dis_stage and pycor > -13 ]
+  ask turtles[ move-to-empty-one-of place-to-move]
 end
 
 to max_distance_neigh
   let nearest-neighbor 0
   ask turtles [
     set nearest-neighbor min-one-of other turtles [distance myself]  ;; choose my nearest neighbor based on distance
-    move-to-empty-one-of place-chairs with [distance nearest-neighbor > max-distance-neigh]
+    move-to-empty-one-of  with [distance nearest-neighbor > max-distance-neigh]
     show nearest-neighbor
   ]
 end
@@ -336,7 +337,7 @@ max-distance-neigh
 max-distance-neigh
 1
 5
-5.0
+1.0
 1
 1
 NIL
