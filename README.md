@@ -11,14 +11,16 @@ Settare il world:
 - [x] Suddividere il mondo (palco e zona sedie);
 - [x] Creare quadrato dove posizionare le sedie;
 - [x] Suddividere il quadrato in righe dove l'utente inserisce le sedie;
-- [ ] Boh
+- [x] Indice di attrazione in base alla distanza della fila dal palco;
+- [x] Creare file con sedie (in base alla scelta dell'utente) e schienale (per dare direzione verso il palco);
 
 Modificare comportamento persone:
-- [ ] Movimento in base ad attrazione verso il palco (la persona deve cercare il punto più vicino dove sedersi)
+- [ ] Movimento in base ad attrazione verso il palco (la persona deve cercare il punto più vicino dove sedersi);
+- [ ] Trovare sedia;
 - [x] Distanza minima dal palco
 - [ ] Bloccare movimento trapassando file di sedie
 - [ ] Massima distanza fra vicini
-- [ ] Comet Haley
+
 
 ## General info
 Tha goal of the project is to simulate the behavior of a group of people in a theater. It allows to check the actual positioning of people on a set of chairs facing a stage.\

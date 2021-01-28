@@ -1,98 +1,71 @@
 globals[
   stage
   place-chairs
-  seating-patch ;; patch where user has to place the chairs
+  seating-patches ;; patch where user has to place the chairs
+  fila
   green-area     ;; agentset of green patches
   c_number ; number of seat
   source-patches
+  place-to-move
+  dist-neigh
 ]
 
+patches-own[
+  attraction  ;indice di attrazione in base alla vicinanza al palco, > 0 solo per le patch di colore grigio
+]
 
 turtles-own[
-   ;nearest-neighbor   ;; closest turtle
-   my-dist-neigh ;; max distance from other turtles
+  ;nearest-neighbor   ;; closest turtle
+  my-dist-neigh ;; max distance from other turtles
+  count-down
 ]
 
 to setup
   clear-all
   set-default-shape turtles "person"
   set-up-world ;inizializzazione del mondo
+  ask turtles [setup-timer]
+  ;create_square
 
-;create_square
 
-  create-turtles n_turtles [
-    set color white
-    set size 1.5
-    let spawn-point  patches with [pycor <= -14 and pycor > -18 ]
-    if[pcolor] of patches = black [
-      move-to-empty-one-of spawn-point
-    ]
-    move-to-empty-one-of spawn-point
-    ;set strategies n-values number-strategies [random-strategy]
-   ; set best-strategy first strategies
-  ;  update-strategies
-  ]
-   ;; start the clock
+  ;; start the clock
   reset-ticks
 end
 
 to go
 
-  ask turtles  [move-to-empty-one-of place-chairs]
+
   min_distance_stage
+  ask turtles [move-turtles]
   ;; advance the clock
-  max_distance_neigh
+  ;ask turtles [max_distance_neigh]
   tick
 end
 
 
 
-to choose-current
-  if mouse-down?
-  [
-    let x-mouse mouse-xcor
-    let y-mouse mouse-ycor
-    if[pcolor] of patch x-mouse y-mouse = red or [pcolor] of patch x-mouse y-mouse = green or [pcolor] of patch x-mouse y-mouse = black [
-      user-message (word "Non è possibile mettere una sedia qui")
-    ]
-
-    if[pcolor] of patch x-mouse y-mouse = gray[
-      ask patch x-mouse y-mouse [set pcolor blue]
-      ask patch x-mouse (y-mouse - 1)[set pcolor yellow]
-      ;tick
-    ]
-  ]
-  set c_number count patches with [pcolor = blue]
-  show c_number
-  reset-ticks
-end
 
 ;; this function allows to set a minimum distance from the stage
 ; each turtle has to stay away from it
 to min_distance_stage
-  let dis_stage (max-pycor - 6) - min_dis_stage
-  let pippo get-max-min (patches with [pcolor = red])
-  show pippo
-  ;ask turtles[ move-to-empty-one-of (pippo)]
+  let dis_stage 5 + min_dis_stage
+  set place-to-move patches with [pycor <= max-pycor - dis_stage and pycor > -13 ]
+  ask turtles[ move-to-empty-one-of place-to-move]
 end
 
 to max_distance_neigh
   let nearest-neighbor 0
-  ask turtles [
-    set nearest-neighbor min-one-of other turtles [distance myself]  ;; choose my nearest neighbor based on distance
-    move-to-empty-one-of place-chairs with [distance nearest-neighbor > max-distance-neigh]
-    show nearest-neighbor
-  ]
+  let num-neighbors 0
+
+  set nearest-neighbor (other turtles) in-radius max-distance-neigh ;; choose my nearest neighbor based on distance
+  show nearest-neighbor
+  set num-neighbors count nearest-neighbor
+  show num-neighbors
+  if num-neighbors > 0 [back 1]
+
 end
-;; Nonetheless, to make a nice visualization
-;; this procedure is used to ensure that we only have one
-;; turtle per patch.
-to move-to-empty-one-of [locations]  ;; turtle procedure
-  move-to one-of locations
-  while [any? other turtles-here] [
-    move-to one-of locations
-  ]
-end
+
+
 
 
 to set-up-world
@@ -103,7 +76,7 @@ to set-up-world
 
   set place-chairs patches with [pycor <= max-pycor - 6 and pycor > -13 ]
   ask place-chairs [set pcolor brown]
-  show place-chairs
+
     ;; create the spawn area
   set green-area patches with [pycor <= -14  ]
   ask green-area [ set pcolor green ]
@@ -116,19 +89,48 @@ to set-up-world
 
   let pippo count patches with [pcolor = brown] with-max [pxcor]
 
-  set seating-patch patches with [pycor >= -12 and pycor <= 12]
+  ;set seating-patch patches with [pycor >= -12 and pycor <= 12]
 
   ;set seating-patch [patches with [(abs(pxcor) = 13  and abs(pycor) <= 10) or ( abs(pxcor) <= 13  and abs(pycor) = 10)]] of center
   ;ask seating-patch [ set pcolor gray ]
-  ask patches with [ pycor mod 4 = 0
-    and pycor < 12
-    and pycor > -12
-    and pxcor > -12
-    and pxcor < 12]
-  [ set pcolor gray ]
+ ; ask patches with [ pycor mod 4 = 0
+    ;and pycor < 12
+    ;and pycor > -12
+   ; and pxcor > -12
+  ;  and pxcor < 12]
+ ; [ set pcolor gray ]
 
- if initialize-number-chair? [
-    ask patches with [ pxcor mod 3 = 0
+  ;inizializzazione indice di attrazione e file
+  let i 8
+  let lcl 1.25
+  ask patches[
+    while[-8 <= i] [
+
+      set fila patches with [ pycor = i
+        and pxcor >= -12
+        and pxcor <= 12]
+
+      ask patches with [ pycor = i
+        and pxcor >= -12
+        and pxcor <= 12]
+      [ set pcolor gray
+        set attraction lcl]
+
+      set lcl lcl - 0.25
+      set i i - 4
+    ]
+  ]
+
+  ;inizializzazione sedute
+  if initialize-number-chair? [
+    set seating-patches patches with [ pxcor mod 3 = 0
+      and pycor mod 4 = 0
+      and pycor < 9
+      and pycor > -9
+      and pxcor >= -12
+      and pxcor <= 12]
+
+     ask patches with [ pxcor mod column = 0
       and pycor mod 4 = 0
       and pycor < 9
       and pycor > -9
@@ -136,20 +138,129 @@ to set-up-world
       and pxcor <= 12]
     [ set pcolor blue ]
 
+    let n 7
+    let m 0
+    while [ -9 <= n][
+      ifelse column = 5
+      [set m -10]
+      [set m -12]
+
+      while[m <= 12 ][
+        ask patches with [ pxcor = m
+          and pycor = n
+        ]
+        [ set pcolor yellow ]
+        set m m + column
+        set dist-neigh column - 1
+      ]
+      set n n - 4
+    ]
+
+
+  ]
+ ; creazione persone
+  create-turtles n_turtles [
+    set color white
+    set size 1.5
+    let spawn-point  patches with [pycor <= -14 and pycor > -18 ]
+    if[pcolor] of patches = black [
+      move-to-empty-one-of spawn-point
+    ]
+    move-to-empty-one-of spawn-point
+    ;set strategies n-values number-strategies [random-strategy]
+    ; set best-strategy first strategies
+    ;  update-strategies
+  ]
+
+  ;;
+  ;;let dist 0
+  ;; let neigh 0
+   ;;let cacca 0
+  ;; ask patches [set neigh min-one-of patches with [pcolor = blue] [distance myself]]
+ ;;  show neigh
+   ;;ask patches [set dist distance neigh]
+  ;; show dist
+  ;; set c_number count patches with [pcolor = blue]
+  ;; set dist-neigh dist-neigh + dist / c_number
+  ;; show dist-neigh
+
+
+end
+
+
+to choose-current
+  let dist2 0
+  let neigh2 0
+  if mouse-down?
+  [
+    let x-mouse mouse-xcor
+    let y-mouse mouse-ycor
+    if[pcolor] of patch x-mouse y-mouse = red or [pcolor] of patch x-mouse y-mouse = green or [pcolor] of patch x-mouse y-mouse = black or [pcolor] of patch x-mouse y-mouse = brown [
+      user-message (word "Non è possibile mettere una sedia qui")
+    ]
+
+    if[pcolor] of patch x-mouse y-mouse = gray[
+      ask patch x-mouse y-mouse [set pcolor blue]
+      ask patch x-mouse (y-mouse - 1)[set pcolor yellow]
+      ;tick
+    ]
+    ask patch x-mouse y-mouse [set neigh2 min-one-of patches with [pcolor = blue] [distance myself]]
+    show neigh2
+    ask patch x-mouse y-mouse [set dist2 distance neigh2]
+    show dist2
+    set c_number count patches with [pcolor = blue]
+    set dist-neigh dist-neigh + dist2 / c_number
+  ]
+
+
+  reset-ticks
+end
+
+to setup-timer
+   set count-down 30 ;; a 30 tick timer
+   ;; if you have a display of the remaining time,
+   ;; you might want to initialize it here, for example:
+end
+
+to decrement-timer
+set count-down count-down - 1
+end
+
+to-report timer-expired?
+report ( count-down <= 0 )
+end
+
+to continue
+  ask turtles
+  [rt -90 + random 181]
+  ask turtles
+  [ifelse [pcolor] of patch-ahead 1 = blue [ lt random-float 360 ]
+    [fd 1]
   ]
 end
 
-to-report get-max-min [p-set]
+;this function is used to set possible movements of turtles
+to move-turtles
+  if [pcolor] of patch-ahead 1 = gray or [pcolor] of patch-ahead 1 = yellow or [pcolor] of patch-here = gray or [pcolor] of patch-here = yellow [
 
-   let coord []
+  ]
 
-   ask one-of p-set with-min [pxcor] [set coord lput pxcor coord]
-   ask one-of p-set with-max [pxcor] [set coord lput pxcor coord]
-   ask one-of p-set with-min [pycor] [set coord lput pycor coord]
-   ask one-of p-set with-max [pycor] [set coord lput pycor coord]
+  ifelse ([attraction] of patch-here = 0)
+  [ move-to-empty-one-of place-to-move
+  ]
+  [move-to max-one-of patches in-radius 3 [attraction]]
 
-   report coord
 
+end
+;; Nonetheless, to make a nice visualization
+;; this procedure is used to ensure that we only have one
+;; turtle per patch.
+to move-to-empty-one-of [locations]  ;; turtle procedure
+  move-to one-of locations
+
+  while [any? other turtles-here] [
+    move-to one-of locations
+  ]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -252,7 +363,7 @@ n_turtles
 n_turtles
 5
 50
-50.0
+9.0
 1
 1
 NIL
@@ -284,7 +395,7 @@ chair_number
 chair_number
 1
 50
-27.0
+50.0
 1
 1
 NIL
@@ -293,9 +404,9 @@ HORIZONTAL
 MONITOR
 1013
 112
-1113
+1114
 157
-number of chair
+Number of chair
 count patches with [pcolor = blue]
 17
 1
@@ -320,8 +431,8 @@ SLIDER
 min_dis_stage
 min_dis_stage
 1
-5
-5.0
+3
+2.0
 1
 1
 NIL
@@ -334,13 +445,39 @@ SLIDER
 371
 max-distance-neigh
 max-distance-neigh
-1
-5
-5.0
+0
+3
+3.0
 1
 1
 NIL
 HORIZONTAL
+
+SLIDER
+796
+391
+968
+424
+column
+column
+1
+5
+2.0
+1
+1
+NIL
+HORIZONTAL
+
+MONITOR
+1011
+176
+1181
+221
+Distance between neighbors
+dist-neigh
+17
+1
+11
 
 @#$#@#$#@
 ## WHAT IS IT?
