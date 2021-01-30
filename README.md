@@ -15,11 +15,11 @@ Settare il world:
 - [x] Creare file con sedie (in base alla scelta dell'utente) e schienale (per dare direzione verso il palco);
 
 Modificare comportamento persone:
-- [ ] Movimento in base ad attrazione verso il palco (la persona deve cercare il punto più vicino dove sedersi);
-- [ ] Trovare sedia;
+- [x] Movimento in base ad attrazione verso il palco (la persona deve cercare il punto più vicino dove sedersi);
+- [x] Trovare sedia;
 - [x] Distanza minima dal palco
-- [ ] Bloccare movimento trapassando file di sedie
-- [ ] Massima distanza fra vicini
+- [x] Bloccare movimento trapassando file di sedie
+- [ ] Massima distanza fra vicini?
 
 
 ## General info

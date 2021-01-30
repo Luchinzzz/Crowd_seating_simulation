@@ -1,47 +1,69 @@
 globals[
   stage
-  place-chairs
+  place-chairs ; zona marrone
   seating-patches ;; patch where user has to place the chairs
-  fila
-  green-area     ;; agentset of green patches
+  fila ; zone grigie
+  green-area     ;; spawn-poin agentset of green patches
   c_number ; number of seat
-  source-patches
-  place-to-move
-  dist-neigh
+  place-to-move ;zona marrone chiaro dove le tartarughe si possono spostare
+  dist-neigh ; mostra la distanza base tra una sedia e l'altra
+  n-turtles-done
 ]
 
 patches-own[
   attraction  ;indice di attrazione in base alla vicinanza al palco, > 0 solo per le patch di colore grigio
+  booked ; controlla se una sedia è prenotata (true o false)
+
+  cost-path
+  father
+  visited?
+  active?
+  final-cost
 ]
 
+
 turtles-own[
-  ;nearest-neighbor   ;; closest turtle
-  my-dist-neigh ;; max distance from other turtles
-  count-down
+  nearest-neighbor   ;; closest turtle
+ ;; max distance from other turtles
+
+  goal ;goal finale di mettersi a sedere
+  start ; where to start
+  path ; percorso ottimale da start a goal
+  done? ; controlla se ha finito il percorso
 ]
 
 to setup
   clear-all
   set-default-shape turtles "person"
   set-up-world ;inizializzazione del mondo
-  ask turtles [setup-timer]
   ;create_square
 
-
+  ask patches [setup-path]
   ;; start the clock
+
   reset-ticks
 end
+
 
 to go
 
 
   min_distance_stage
-  ask turtles [move-turtles]
-  ;; advance the clock
-  ;ask turtles [max_distance_neigh]
-  tick
-end
 
+  ;move-turtles
+  ask turtles [start-turtles]
+  ask turtles [compute-path]
+  tick
+
+  while[true][
+    set n-turtles-done 0
+    ask turtles [move-turtles]
+
+    tick
+    if n_turtles = n-turtles-done [ask turtles[max-distance-neigh] stop]
+  ]
+
+end
 
 
 
@@ -49,27 +71,55 @@ end
 ; each turtle has to stay away from it
 to min_distance_stage
   let dis_stage 5 + min_dis_stage
-  set place-to-move patches with [pycor <= max-pycor - dis_stage and pycor > -13 ]
-  ask turtles[ move-to-empty-one-of place-to-move]
+  set place-to-move patches with [pycor <= max-pycor - dis_stage and pycor > -13 and pcolor = 37 or pcolor = blue ]
+  ask place-to-move[set father nobody
+    set cost-path 0
+    set visited? false
+  set active? false]
 end
 
-to max_distance_neigh
-  let nearest-neighbor 0
+to max-distance-neigh
   let num-neighbors 0
 
-  set nearest-neighbor (other turtles) in-radius max-distance-neigh ;; choose my nearest neighbor based on distance
-  show nearest-neighbor
+  set nearest-neighbor (other turtles) in-radius min-distance-neigh ;; choose my nearest neighbor based on distance
+  ;set nearest-neighbor min-one-of other turtles [distance myself]
   set num-neighbors count nearest-neighbor
-  show num-neighbors
-  if num-neighbors > 0 [back 1]
-
 end
 
+
+to choose-current
+
+  if mouse-down?
+  [
+    let x-mouse mouse-xcor
+    let y-mouse mouse-ycor
+    if[pcolor] of patch x-mouse y-mouse = red or [pcolor] of patch x-mouse y-mouse = green or [pcolor] of patch x-mouse y-mouse = black or [pcolor] of patch x-mouse y-mouse = brown [
+      user-message (word "Non è possibile mettere una sedia qui")
+    ]
+
+    if[pcolor] of patch x-mouse y-mouse = gray[
+      ask patch x-mouse y-mouse [set pcolor blue]
+      ask patch x-mouse (y-mouse - 1)[set pcolor yellow]
+      ;tick
+    ]
+
+
+    if[pycor] of patch x-mouse y-mouse = 8 [ask patch x-mouse y-mouse [set attraction 1.25]]
+    if[pycor] of patch x-mouse y-mouse = 4 [ask patch x-mouse y-mouse [set attraction 1.00]]
+    if[pycor] of patch x-mouse y-mouse = 0 [ask patch x-mouse y-mouse [set attraction 0.75]]
+    if[pycor] of patch x-mouse y-mouse = -4 [ask patch x-mouse y-mouse [set attraction 0.50]]
+    if[pycor] of patch x-mouse y-mouse = -8 [ask patch x-mouse y-mouse [set attraction 0.25]]
+
+
+  ]
+
+  tick
+end
 
 
 
 to set-up-world
-  let center patch  0 0
+
   ;create the stage
   set stage patches with [ pycor >  max-pycor - 6]
   ask stage [set pcolor red]
@@ -87,22 +137,10 @@ to set-up-world
   ]
    ask stage [ set plabel "STAGE" ]
 
-  let pippo count patches with [pcolor = brown] with-max [pxcor]
-
-  ;set seating-patch patches with [pycor >= -12 and pycor <= 12]
-
-  ;set seating-patch [patches with [(abs(pxcor) = 13  and abs(pycor) <= 10) or ( abs(pxcor) <= 13  and abs(pycor) = 10)]] of center
-  ;ask seating-patch [ set pcolor gray ]
- ; ask patches with [ pycor mod 4 = 0
-    ;and pycor < 12
-    ;and pycor > -12
-   ; and pxcor > -12
-  ;  and pxcor < 12]
- ; [ set pcolor gray ]
 
   ;inizializzazione indice di attrazione e file
   let i 8
-  let lcl 1.25
+  ;let lcl 1.25
   ask patches[
     while[-8 <= i] [
 
@@ -113,145 +151,239 @@ to set-up-world
       ask patches with [ pycor = i
         and pxcor >= -12
         and pxcor <= 12]
-      [ set pcolor gray
-        set attraction lcl]
+      [ set pcolor gray]
+       ; set attraction lcl]
 
-      set lcl lcl - 0.25
+     ; set lcl lcl - 0.25
       set i i - 4
     ]
   ]
 
-  ;inizializzazione sedute
-  if initialize-number-chair? [
-    set seating-patches patches with [ pxcor mod 3 = 0
-      and pycor mod 4 = 0
-      and pycor < 9
-      and pycor > -9
-      and pxcor >= -12
-      and pxcor <= 12]
+  ask patches with [ pxcor mod column = 0
+    and pycor mod 4 = 0
+    and pycor < 9
+    and pycor > -9
+    and pxcor >= -12
+    and pxcor <= 12]
+  [ set pcolor blue
+    set booked false]
 
-     ask patches with [ pxcor mod column = 0
-      and pycor mod 4 = 0
-      and pycor < 9
-      and pycor > -9
-      and pxcor >= -12
-      and pxcor <= 12]
-    [ set pcolor blue ]
+  let m 0
+  let a 8
+  let lcl 1.25
+  while [ -8 <= a][
+    ifelse column = 5
+    [set m -10]
+    [set m -12]
 
-    let n 7
-    let m 0
-    while [ -9 <= n][
-      ifelse column = 5
-      [set m -10]
-      [set m -12]
-
-      while[m <= 12 ][
-        ask patches with [ pxcor = m
-          and pycor = n
-        ]
-        [ set pcolor yellow ]
-        set m m + column
-        set dist-neigh column - 1
+    while[m <= 12 ][
+      ask patches with [ pxcor = m
+        and pycor = a
       ]
-      set n n - 4
+      [ set attraction lcl]
+      set m m + column
+      set dist-neigh column - 1
     ]
-
-
+    set lcl lcl - 0.25
+    set a a - 4
   ]
+
+  let n 7
+  set m 0
+  ;inizializza i colori degli schienali
+  while [ -9 <= n][
+    ifelse column = 5
+    [set m -10]
+    [set m -12]
+
+    while[m <= 12 ][
+      ask patches with [ pxcor = m
+        and pycor = n
+      ]
+      [ set pcolor yellow ]
+      set m m + column
+      set dist-neigh column - 1
+    ]
+    set n n - 4
+  ]
+
+
  ; creazione persone
-  create-turtles n_turtles [
-    set color white
-    set size 1.5
-    let spawn-point  patches with [pycor <= -14 and pycor > -18 ]
-    if[pcolor] of patches = black [
+   set c_number count patches with [pcolor = blue]
+  ifelse c_number >= n_turtles[
+    create-turtles n_turtles [
+      set color white
+      set size 1.5
+      let spawn-point  patches with [pycor <= -14 and pycor > -18 ]
       move-to-empty-one-of spawn-point
+      set goal max-one-of patches with [booked = false] [attraction]
+      ask goal [set booked true]
+
+      set label who
+      set label-color black
+      ;set strategies n-values number-strategies [random-strategy]
+      ; set best-strategy first strategies
+      ;  update-strategies
     ]
-    move-to-empty-one-of spawn-point
-    ;set strategies n-values number-strategies [random-strategy]
-    ; set best-strategy first strategies
-    ;  update-strategies
   ]
-
-  ;;
-  ;;let dist 0
-  ;; let neigh 0
-   ;;let cacca 0
-  ;; ask patches [set neigh min-one-of patches with [pcolor = blue] [distance myself]]
- ;;  show neigh
-   ;;ask patches [set dist distance neigh]
-  ;; show dist
-  ;; set c_number count patches with [pcolor = blue]
-  ;; set dist-neigh dist-neigh + dist / c_number
-  ;; show dist-neigh
-
-
+    [user-message (word "Numero di persone maggiore delle sedie disponibili... Diminuire numero persone o aumentare numero sedie")]
+  set seating-patches patches with [pcolor = blue]
 end
 
 
-to choose-current
-  let dist2 0
-  let neigh2 0
-  if mouse-down?
-  [
-    let x-mouse mouse-xcor
-    let y-mouse mouse-ycor
-    if[pcolor] of patch x-mouse y-mouse = red or [pcolor] of patch x-mouse y-mouse = green or [pcolor] of patch x-mouse y-mouse = black or [pcolor] of patch x-mouse y-mouse = brown [
-      user-message (word "Non è possibile mettere una sedia qui")
-    ]
+; setta il path da far seguire alle tartarughe
+to setup-path
+  ;colonne path
+  ask patches with [pxcor = -14  and pycor <= 9 and  pycor >= -11]
+    [ set pcolor 37]
+   ask patches with [pxcor = 14  and pycor <= 9 and  pycor >= -11]
+    [ set pcolor 37]
+  ;righe path
+  ask patches with [pxcor >= -14 and pxcor <= 14 and pycor = 10]
+  [ set pcolor 37]
+  ask patches with [pxcor > -14 and pxcor < 14 and pycor = 9]
+  [ set pcolor 37]
+  ask patches with [pxcor > -14 and pxcor < 14 and pycor = 5]
+    [ set pcolor 37]
+  ask patches with [pxcor > -14 and pxcor < 14 and pycor = 1]
+    [ set pcolor 37]
+  ask patches with [pxcor > -14 and pxcor < 14 and pycor = -3]
+    [ set pcolor 37]
+  ask patches with [pxcor > -14 and pxcor < 14 and pycor = -7]
+    [ set pcolor 37]
+  ask patches with [pxcor > -14 and pxcor < 14 and pycor = -11 ]
+    [ set pcolor 37]
+   ask patches with [pxcor = 0 and pycor = -12 ]
+    [ set pcolor 37]
+  ask patches with [pxcor = 1 and pycor = -12 ]
+    [ set pcolor 37]
+  ask patches with [pxcor = -1 and pycor = -12 ]
+    [ set pcolor 37]
 
-    if[pcolor] of patch x-mouse y-mouse = gray[
-      ask patch x-mouse y-mouse [set pcolor blue]
-      ask patch x-mouse (y-mouse - 1)[set pcolor yellow]
-      ;tick
-    ]
-    ask patch x-mouse y-mouse [set neigh2 min-one-of patches with [pcolor = blue] [distance myself]]
-    show neigh2
-    ask patch x-mouse y-mouse [set dist2 distance neigh2]
-    show dist2
-    set c_number count patches with [pcolor = blue]
-    set dist-neigh dist-neigh + dist2 / c_number
-  ]
-
-
-  reset-ticks
 end
 
-to setup-timer
-   set count-down 30 ;; a 30 tick timer
-   ;; if you have a display of the remaining time,
-   ;; you might want to initialize it here, for example:
-end
-
-to decrement-timer
-set count-down count-down - 1
-end
-
-to-report timer-expired?
-report ( count-down <= 0 )
-end
-
-to continue
-  ask turtles
-  [rt -90 + random 181]
-  ask turtles
-  [ifelse [pcolor] of patch-ahead 1 = blue [ lt random-float 360 ]
-    [fd 1]
-  ]
-end
 
 ;this function is used to set possible movements of turtles
 to move-turtles
-  if [pcolor] of patch-ahead 1 = gray or [pcolor] of patch-ahead 1 = yellow or [pcolor] of patch-here = gray or [pcolor] of patch-here = yellow [
-
+  ifelse [path] of turtles != false and length path > 0[
+    let next-move first path
+    set path remove-item 0 path
+    move-to next-move
+    ; Set the Goal and the new Start point
+    ;set Start Goal
   ]
-
-  ifelse ([attraction] of patch-here = 0)
-  [ move-to-empty-one-of place-to-move
-  ]
-  [move-to max-one-of patches in-radius 3 [attraction]]
-
+  [ set n-turtles-done n-turtles-done + 1 ]
 
 end
+
+;inizializza la prima patch nel percorso path
+to start-turtles
+  if [pcolor] of patch-here = green[
+    set start one-of patches with [pcolor = 37 and pycor = -11]
+    move-to start
+  ]
+end
+
+;utility-function per ricalcolare il path da seguire passando il nuovo goal
+to compute-path
+  set path  A* patch-here goal place-to-move
+end
+
+to-report A* [#Start #Goal #valid-map]
+  ; clear all the information in the agents, and reset them
+  ask #valid-map with [visited?]
+  [
+    set father nobody
+    set cost-path 0
+    set visited? false
+    set active? false
+  ]
+  ; Active the starting point to begin the searching loop
+  ask #Start
+  [
+    set father self
+    set visited? true
+    set active? true
+
+  ]
+  ; exists? indicates if in some instant of the search there are no options to continue.
+  ; In this case, there is no path connecting #Start and #Goal
+  let exists? true
+  ; The searching loop is executed while we don't reach the #Goal and we think a path exists
+  while [not [visited?] of #Goal and exists?]
+  [
+    ; We only work on the valid pacthes that are active
+    let options #valid-map with [active?]
+    ; If any
+    ifelse any? options
+    [
+      ; Take one of the active patches with minimal expected cost
+      ask min-one-of options [Total-expected-cost #Goal]
+      [
+        ; Store its real cost (to reach it) to compute the real cost of its children
+        let Cost-path-father Cost-path
+        ; and deactivate it, because its children will be computed right now
+        set active? false
+        ; Compute its valid neighbors and look for an extension of the path
+        let valid-neighbors neighbors with [member? self #valid-map]
+        ask valid-neighbors
+        [
+          ; There are 2 types of valid neighbors:
+          ;   - Those that have never been visited (therefore, the path we are building is the
+          ;       best for them right now)
+          ;   - Those that have been visited previously (therefore we must check if the path we
+          ;       are building is better or not, by comparing its expected length with the one
+          ;       stored in the patch)
+          ; One trick to work with both type uniformly is to give for the first case an upper
+          ;   bound big enough to be sure that the new path will always be smaller.
+          let t ifelse-value visited? [ Total-expected-cost #Goal] [2 ^ 20]
+          ; If this temporal cost is worse than the new one, we substitute the information in
+          ;   the patch to store the new one (with the neighbors of the first case, it will be
+          ;   always the case)
+          if t > (Cost-path-father + distance myself + Heuristic #Goal)
+          [
+            ; The current patch becomes the father of its neighbor in the new path
+            set father myself
+            set visited? true
+            set active? true
+            ; and store the real cost in the neighbor from the real cost of its father
+            set Cost-path Cost-path-father + distance father
+            set Final-Cost precision Cost-path 3
+    ] ] ] ]
+    ; If there are no more options, there is no path between #Start and #Goal
+    [
+      set exists? false
+    ] ]
+  ; After the searching loop, if there exists a path
+  ifelse exists?
+  [
+    ; We extract the list of patches in the path, form #Start to #Goal by jumping back from
+    ;   #Goal to #Start by using the fathers of every patch
+    let current #Goal
+    set Final-Cost (precision [Cost-path] of #Goal 3)
+    let rep (list current)
+    While [current != #Start]
+    [
+      set current [father] of current
+      set rep fput current rep
+    ]
+    report rep
+  ]
+  [
+    ; Otherwise, there is no path, and we return False
+    report false
+  ]
+end
+
+to-report Total-expected-cost [goal_1]
+  report cost-path + Heuristic goal_1
+end
+
+to-report Heuristic [goal_2]
+  report distance goal_2
+end
+
+
 ;; Nonetheless, to make a nice visualization
 ;; this procedure is used to ensure that we only have one
 ;; turtle per patch.
@@ -290,41 +422,11 @@ GRAPHICS-WINDOW
 ticks
 30.0
 
-SLIDER
-955
-18
-1053
-51
-grid-size-x
-grid-size-x
-1
-9
-3.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-1072
-19
-1170
-52
-grid-size-y
-grid-size-y
-1
-9
-3.0
-1
-1
-NIL
-HORIZONTAL
-
 BUTTON
-797
-69
-861
-102
+833
+186
+897
+219
 Setup
 setup\n
 NIL
@@ -338,10 +440,10 @@ NIL
 1
 
 BUTTON
-796
-249
-912
-282
+752
+62
+868
+95
 Select casella
 choose-current
 T
@@ -355,25 +457,25 @@ NIL
 1
 
 SLIDER
-795
-110
-967
-143
+752
+19
+924
+52
 n_turtles
 n_turtles
-5
-50
-9.0
+1
+65
+27.0
 1
 1
 NIL
 HORIZONTAL
 
 BUTTON
-795
-27
-858
-60
+754
+186
+817
+219
 Go
 go
 T
@@ -386,67 +488,41 @@ NIL
 NIL
 1
 
-SLIDER
-795
-151
-967
-184
-chair_number
-chair_number
-1
-50
-50.0
-1
-1
-NIL
-HORIZONTAL
-
 MONITOR
-1013
-112
-1114
-157
+975
+25
+1076
+70
 Number of chair
 count patches with [pcolor = blue]
 17
 1
 11
 
-SWITCH
-796
-197
-977
-230
-initialize-number-chair?
-initialize-number-chair?
-0
-1
--1000
-
 SLIDER
-796
-293
-968
-326
+752
+102
+924
+135
 min_dis_stage
 min_dis_stage
 1
-3
-2.0
+5
+1.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-795
-338
-967
-371
-max-distance-neigh
-max-distance-neigh
+753
+236
+925
+269
+min-distance-neigh
+min-distance-neigh
 0
-3
+5
 3.0
 1
 1
@@ -454,30 +530,64 @@ NIL
 HORIZONTAL
 
 SLIDER
-796
-391
-968
-424
+752
+145
+924
+178
 column
 column
-1
+2
 5
-2.0
+3.0
 1
 1
 NIL
 HORIZONTAL
 
 MONITOR
-1011
-176
-1181
-221
+973
+89
+1143
+134
 Distance between neighbors
 dist-neigh
 17
 1
 11
+
+BUTTON
+807
+332
+932
+365
+Controlla turtle 0
+inspect turtle 0\n
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+763
+384
+997
+417
+NIL
+show [nearest-neighbor] of turtle 0
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
