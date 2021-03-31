@@ -37,7 +37,7 @@ Every seat has an `attraction` weight, calculated by adding results of both stag
 To run this project, download Netlogo software or upload the project in Netlogo Web, here is the [link](https://ccl.northwestern.edu/netlogo/download.shtml).
 
 
-## :computer: Technologies <a name="tecnologies"/>
+## :computer: Technologies <a name="technologies"/>
 Project is created with:
 * [Netlogo](https://ccl.northwestern.edu/netlogo/index.shtml)
 
