@@ -7,8 +7,8 @@ Netlogo project for Artificial Intelligent Systems-Intelligent Models exam.
 * [Technologies](#technologies)
 * [License](#license)
 
-<a name="description"/>
-## :books: Description 
+
+## :books: Description <a name="description"/>
 Tha goal of the project is to simulate the behavior of a group of people in a theater. It allows to check the actual positioning of people on a set of chairs facing a stage.\
 Rules:
 * attraction to the stage
@@ -20,8 +20,8 @@ Rules:
 
 The interface graphically show the behavior over time and allow user to modify the parameters in real time. 
 
-<a name="how-to-use"/>
-## :man_technologist: How to use 
+
+## :man_technologist: How to use <a name="how-to-use"/>
 Interface shows parameters users can change, they indicate respectively:
 * `column`: number of seat
 * `n_turtles`: number of people
@@ -32,16 +32,16 @@ Interface shows parameters users can change, they indicate respectively:
 
 Every seat has an `attraction` weight, calculated by adding results of both stage weight and neighbours weight function. Turtles are attracted to seat with minimum attraction value, this means that every tick they look for the best place to sit and they compute a "fastest" path to reach it. User can decide to either maximize distance between neighbours or minimize distance from stage, so this means that turtles can choose the seat depending on how far it is from other people or how far it is from stage. If these two parameters are equal turtles just choose place with minimun attraction without a specific criterion. 
 
-<a name="setup"/>
-## :gear: Setup 
+
+## :gear: Setup <a name="setup"/>
 To run this project, download Netlogo software or upload the project in Netlogo Web, here is the [link](https://ccl.northwestern.edu/netlogo/download.shtml).
 
-<a name="tecnologies"/>
-## :computer: Technologies 
+
+## :computer: Technologies <a name="tecnologies"/>
 Project is created with:
 * [Netlogo](https://ccl.northwestern.edu/netlogo/index.shtml)
 
-<a name="license"/>
-## :balance_scale: License 
+
+## :balance_scale: License <a name="license"/>
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE) file for details
 
