@@ -1,21 +1,26 @@
-globals[
-  stage
-  place-chairs ; zona marrone
-  seating-patches ;; patch where user has to place the chairs
+globals [
+  count1 ; per contare il numero di turtles da creare
+  stage ; zona del palco
+  place_chairs ; zona marrone scuro
+  green_area ; zona di spawn
   fila ; zone grigie
-  green-area     ;; spawn-poin agentset of green patches
-  c_number ; number of seat
-  place-to-move ;zona marrone chiaro dove le tartarughe si possono spostare
   dist-neigh ; mostra la distanza base tra una sedia e l'altra
-  n-turtles-done ; controlla se le turtle hanno completato il loro percorso
+  c_number ; numero di sedie
+  place_to_move ; zona marrone chiaro dove le tartarughe si possone muovere per arrivare al goal
+  check_dis ; variabile per controllare se la distanza minima è cambiata
+  seating-patches ; sedie
 
 ]
 
-patches-own[
-  attraction  ;indice di attrazione in base alla vicinanza al palco, > 0 solo per le patch di colore grigio
-  booked ; controlla se una sedia è prenotata (true o false)
+patches-own [
+  available ; per sapere se una sedia è libera
+  attraction ; indice di attrazione dato dalla somma di ppalco e di pvicini
+  distanza_palco ; valore per distanza della sedia dal palco
+  distanza_vicini ; valore per distanza dai vicini
+  ppalco ; formula per calcolare il peso del palco
+  pvicini ; formula per calcolare il peso in base ai vicini
 
-  available ; controlla se è disponibile o no
+  ;parametri per A star
   cost-path
   father
   visited?
@@ -25,162 +30,80 @@ patches-own[
 
 
 turtles-own[
-  nearest-neighbor   ;; closest turtle
- ;; max distance from other turtles
+  goal ; destinazione della turtle
+  start ; punto di partenza della turtle
 
-  goal ;goal finale di mettersi a sedere
-  start ; where to start
-  path ; percorso ottimale da start a goal
-  done? ; controlla se ha finito il percorso
+  path; percorso ottimale da start a goal
+  next-move ; prossima patch in cui muoversi
 ]
+
 
 to setup
   clear-all
   set-default-shape turtles "person"
   set-up-world ;inizializzazione del mondo
-  ;create_square
+               ;create_square
 
   ask patches [setup-path]
   ;; start the clock
+  set count1 n_turtles
+
+
+  compute_attraction
 
   reset-ticks
 end
 
-
 to go
+  set c_number count patches with [pcolor = blue]
+  set_place_to_move
+  set check_dis distanza_min
+  ifelse c_number >= n_turtles[
 
+    if count1 > 0 [
+      create-turtles 1 [
+        set color white
 
-  min_distance_stage
+        set size 1.5
+        let spawn-point  patches with [pycor <= -14 and pycor > -18 ]
+        move-to-empty-one-of spawn-point
+        set goal min-one-of patches with [available = true] [attraction]
+        ;ask goal [set booked true]
 
-  ;move-turtles
-  ask turtles [start-turtles]
-  ask turtles [compute-path]
-  tick
+        set label who
+        set label-color black
+      ]
 
-  while[true][
-    set n-turtles-done 0
-    ask turtles [move-turtles]
-    ask turtles[check-chair]
-    tick
-    if n_turtles = n-turtles-done [
-      ask patches with [pcolor = blue and available = true] [set booked false]
-      ask turtles[check-chair2]
-      stop]
-  ]
-
-end
-
-
-
-;; this function allows to set a minimum distance from the stage
-; each turtle has to stay away from it
-to min_distance_stage
-  let dis_stage 5 + min_dis_stage
-  set place-to-move patches with [pycor <= max-pycor - dis_stage and pycor > -13 and pcolor = 37 or pcolor = blue ]
-  ask place-to-move[set father nobody
-    set cost-path 0
-    set visited? false
-    set active? false]
-end
-
-to max-distance-neigh
-  let num-neighbors 0
-
-  set nearest-neighbor (other turtles) in-radius min-distance-neigh ;; choose my nearest neighbor based on distance
-  ;set nearest-neighbor min-one-of other turtles [distance myself]
-  set num-neighbors count nearest-neighbor
-end
-
-to check-chair
-  let x [pxcor] of goal
-  let y [pycor] of goal
-  let i 1
-
-  while [i <= min-distance-neigh][
-
-    if [available] of patch (x + i) y = false or [available] of patch (x - i) y = false [
-
-      ask goal [set available true ]
-      ;ask goal2 [set booked false]
-      set goal max-one-of patches with [booked = false and available = true] [attraction]
-      ;if [pcolor] of patch-here = blue  and patch-here != goal [ ask patch-here[set booked false]]
-      ask goal [set booked true]
-      compute-path
+      set count1 count1 - 1
+      ask turtles [start-turtles]
     ]
-    set i i + 1
   ]
-
-end
-
-to check-chair2
-  let x [pxcor] of goal
-  let y [pycor] of goal
-  let i 1
-
-  while [i <= min-distance-neigh][
-
-    if [available] of patch (x + i) y = true or [available] of patch (x - i) y = true [
-     if goal = patch-here and goal != max-one-of patches with [booked = false and available = true] [attraction]
-      [
-        ask goal [set available true ]
-        set goal max-one-of patches with [booked = false and available = true] [attraction]
-        ask goal [set booked true]
-        compute-path]
-    ]
-    set i i + 1
-  ]
-
-end
-
-to check-free-chair
-  if not any? patches with [pcolor = blue and booked = false and available = true]
-  [move-to-empty-one-of green-area]
-
-end
-
-to choose-current
-
-  if mouse-down?
-  [
-    let x-mouse mouse-xcor
-    let y-mouse mouse-ycor
-    if[pcolor] of patch x-mouse y-mouse = red or [pcolor] of patch x-mouse y-mouse = green or [pcolor] of patch x-mouse y-mouse = black or [pcolor] of patch x-mouse y-mouse = brown [
-      user-message (word "Non è possibile mettere una sedia qui")
-    ]
-
-    if[pcolor] of patch x-mouse y-mouse = gray[
-      ask patch x-mouse y-mouse [set pcolor blue]
-      ask patch x-mouse (y-mouse - 1)[set pcolor yellow]
-      ;tick
-    ]
+  [  user-message (word "Numero di persone maggiore delle sedie disponibili... Diminuire numero persone o aumentare numero sedie")]
 
 
-    if[pycor] of patch x-mouse y-mouse = 8 [ask patch x-mouse y-mouse [set attraction 1.25]]
-    if[pycor] of patch x-mouse y-mouse = 4 [ask patch x-mouse y-mouse [set attraction 1.00]]
-    if[pycor] of patch x-mouse y-mouse = 0 [ask patch x-mouse y-mouse [set attraction 0.75]]
-    if[pycor] of patch x-mouse y-mouse = -4 [ask patch x-mouse y-mouse [set attraction 0.50]]
-    if[pycor] of patch x-mouse y-mouse = -8 [ask patch x-mouse y-mouse [set attraction 0.25]]
-
-
-  ]
-
+  ;debug
+  compute_attraction
+  move_turtles
   tick
 end
 
 
 
+
+
+;##################INIZIO FUNZIONI DI SETUP#####################
 to set-up-world
 
   ;create the stage
   set stage patches with [ pycor >  max-pycor - 6]
   ask stage [set pcolor red]
 
-  set place-chairs patches with [pycor <= max-pycor - 6 and pycor > -13 ]
-  ask place-chairs [set pcolor brown]
+  set place_chairs patches with [pycor <= max-pycor - 6 and pycor > -13 ]
+  ask place_chairs [set pcolor brown]
 
     ;; create the spawn area
-  set green-area patches with [pycor <= -14  ]
-  ask green-area [ set pcolor green ]
+  set green_area patches with [pycor <= -14   ]
+  ask green_area [ set pcolor green ]
 
   ask patch (((max-pxcor + min-pxcor)/ 2) + 2) ((max-pycor + (max-pycor - 6))/ 2) [
     set stage self
@@ -203,9 +126,6 @@ to set-up-world
         and pxcor >= -12
         and pxcor <= 12]
       [ set pcolor gray]
-       ; set attraction lcl]
-
-     ; set lcl lcl - 0.25
       set i i - 4
     ]
   ]
@@ -217,7 +137,7 @@ to set-up-world
     and pxcor >= -12
     and pxcor <= 12]
   [ set pcolor blue
-    set booked false
+
     set available true
   ]
 
@@ -260,30 +180,19 @@ to set-up-world
     set n n - 4
   ]
 
-
- ; creazione persone
-   set c_number count patches with [pcolor = blue]
-  ifelse c_number >= n_turtles[
-    create-turtles n_turtles [
-      set color white
-      set size 1.5
-      let spawn-point  patches with [pycor <= -14 and pycor > -18 ]
-      move-to-empty-one-of spawn-point
-      set goal max-one-of patches with [booked = false and available = true] [attraction]
-      ask goal [set booked true]
-
-      set label who
-      set label-color black
-      ;set strategies n-values number-strategies [random-strategy]
-      ; set best-strategy first strategies
-      ;  update-strategies
-    ]
-  ]
-    [  user-message (word "Numero di persone maggiore delle sedie disponibili... Diminuire numero persone o aumentare numero sedie")]
-  set seating-patches patches with [pcolor = blue]
+   set seating-patches patches with [pcolor = blue]
 end
 
+to set_place_to_move
 
+  set place_to_move patches with [ pcolor = 37 or pcolor = blue  ]
+  ask place_to_move[
+    set father nobody
+    set cost-path 0
+    set visited? false
+    set active? false]
+
+end
 ; setta il path da far seguire alle tartarughe
 to setup-path
   ;colonne path
@@ -306,43 +215,163 @@ to setup-path
     [ set pcolor 37]
   ask patches with [pxcor > -14 and pxcor < 14 and pycor = -11 ]
     [ set pcolor 37]
-   ask patches with [pxcor = 0 and pycor = -12 ]
+  ask patches with [pxcor  >= -1 and pxcor <= 1 and pycor = -12 ]
     [ set pcolor 37]
-  ask patches with [pxcor = 1 and pycor = -12 ]
+  ask patches with [pxcor  >= -11 and pxcor <= -9 and pycor = -12 ]
+      [ set pcolor 37]
+  ask patches with [pxcor  >= 9 and pxcor <= 11 and pycor = -12 ]
     [ set pcolor 37]
-  ask patches with [pxcor = -1 and pycor = -12 ]
-    [ set pcolor 37]
+
 
 end
 
+; ################## FINE FUNZIONI DI SETUP ##################
 
-;this function is used to set possible movements of turtles
-to move-turtles
-  ifelse [path] of turtles != false and length path > 0[
-    let next-move first path
-    set path remove-item 0 path
-    move-to next-move
-    ; Set the Goal and the new Start point
-    ;set Start Goal
+
+;####################INIZIO HELP-FUNCTION ##############
+
+to add_turtle
+  let count_turtles count turtles
+  ifelse c_number > count_turtles[
+    create-turtles 1 [
+      set color white
+
+      set size 1.5
+      let spawn-point  patches with [pycor <= -14 and pycor > -18 ]
+      move-to-empty-one-of spawn-point
+      set goal min-one-of patches with [available = true] [attraction]
+      ;ask goal [set booked true]
+
+      set label who
+      set label-color black
+    ]
+    tick
+    ask turtles [start-turtles]
   ]
-  [ ask patch-here[ set available false]
-    set n-turtles-done n-turtles-done + 1 ]
-
+  [  user-message (word "Numero di persone maggiore delle sedie disponibili... Diminuire numero persone o aumentare numero sedie")]
 end
+
+
+; calcola peso palco
+to compute_ppalco
+  ask patches with [pcolor = blue] [ set distanza_palco 13 - pycor]
+  ask patches with [pcolor = blue] [ set ppalco distanza_palco * peso_palco ]
+end
+
+;calcola peso della sedia in base ai vicini che stanno a una distanza minore di distanza_min
+to compute_pvicini
+  ask patches with [pcolor = blue] [
+    let i 1
+    let temp 0
+    while [i <= distanza_min][
+      set distanza_vicini i
+
+      if [available] of patch (pxcor + i) pycor = false [
+        set temp temp + (distanza_min + 1 - distanza_vicini) * peso_vicini
+      ]
+
+      if [available] of patch (pxcor - i) pycor = false [
+         set temp temp + (distanza_min + 1 - distanza_vicini) * peso_vicini
+      ]
+      ask patch pxcor pycor [set pvicini temp]
+      set i i + 1
+    ]
+  ]
+end
+
+; calcola attraction di ogni sedia
+to compute_attraction
+  compute_ppalco
+  compute_pvicini
+  ask patches with [pcolor = blue] [ set attraction ppalco + pvicini]
+end
+
+
+;####################FINE HELP-FUNCTION ##############
+
+;####################INIZIO FUNZIONI PER MOVIMENTO##############
+
+
 
 ;inizializza la prima patch nel percorso path
 to start-turtles
   if [pcolor] of patch-here = green[
-    set start one-of patches with [pcolor = 37 and pycor = -11]
+    set start one-of patches with [pcolor = 37 and pycor = -12]
     move-to start
+  ]
+end
+
+to move_turtles
+
+  ask turtles [
+
+    compute_attraction
+    ;caso in cui la mia sedia è occupata da qualcun altro
+    if [available] of goal = false and patch-here != goal [
+      set goal min-one-of patches with [available = true] [attraction]
+    ]
+    ;controlla se ci sono sedie disponibili
+    if any? seating-patches with [available] = true  [
+      ;se non mi trovo nel mio goal quindi sto camminando per arrivarci
+      ifelse patch-here != goal[
+        ;controlla se esiste un goal migliore rispetto al mio perchè parametri cambiati
+        let old_goal goal
+        set goal min-one-of patches with [available = true] [attraction]
+        ifelse [attraction] of old_goal = [attraction] of goal and patch-here != goal [
+          set goal old_goal
+          walk-towards-goal
+        ]
+        [ walk-towards-goal]
+      ][
+        ;sono nel goal e controllo se ci sta una sedia migliore
+        let possible_goal min-one-of patches with [available = true] [attraction]
+        ifelse [attraction] of patch-here > [attraction] of possible_goal [
+          ask patch-here [ set available true]
+          set goal possible_goal
+          walk-towards-goal
+        ][stop]
+      ]
+    ]
+  ]
+
+end
+
+
+
+to walk-towards-goal
+  compute-path
+  set path remove-item 0 path
+  if [path] of turtles != false and length path > 0[
+    set next-move first path
+    set path remove-item 0 path
+    move-to next-move
+    if next-move = goal [
+      ask goal [set available false]
+      stop
+    ]
+  ]
+
+end
+
+
+
+;; Nonetheless, to make a nice visualization
+;; this procedure is used to ensure that we only have one
+;; turtle per patch.
+to move-to-empty-one-of [locations]  ;; turtle procedure
+  move-to one-of locations
+
+  while [any? other turtles-here] [
+    move-to one-of locations
   ]
 end
 
 ;utility-function per ricalcolare il path da seguire passando il nuovo goal
 to compute-path
-  set path  A* patch-here goal place-to-move
+  set path  A* patch-here goal place_to_move
 end
 
+;###### A star procedure#####
 to-report A* [#Start #Goal #valid-map]
   ; clear all the information in the agents, and reset them
   ask #valid-map with [visited?]
@@ -403,7 +432,12 @@ to-report A* [#Start #Goal #valid-map]
             ; and store the real cost in the neighbor from the real cost of its father
             set Cost-path Cost-path-father + distance father
             set Final-Cost precision Cost-path 3
-    ] ] ] ]
+
+          ]
+          ;show t
+        ]
+      ]
+    ]
     ; If there are no more options, there is no path between #Start and #Goal
     [
       set exists? false
@@ -437,22 +471,12 @@ to-report Heuristic [goal_2]
   report distance goal_2
 end
 
-
-;; Nonetheless, to make a nice visualization
-;; this procedure is used to ensure that we only have one
-;; turtle per patch.
-to move-to-empty-one-of [locations]  ;; turtle procedure
-  move-to one-of locations
-
-  while [any? other turtles-here] [
-    move-to one-of locations
-  ]
-end
+;####################FINE FUNZIONI PER MOVIMENTO##############
 @#$#@#$#@
 GRAPHICS-WINDOW
-161
+197
 10
-724
+760
 574
 -1
 -1
@@ -470,66 +494,84 @@ GRAPHICS-WINDOW
 18
 -18
 18
-1
-1
+0
+0
 1
 ticks
 30.0
 
-BUTTON
-831
-242
-895
-275
-Setup
-setup\n
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-BUTTON
-752
-62
-868
-95
-Select casella
-choose-current
-T
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
 SLIDER
-752
-19
-924
+795
 52
+967
+85
 n_turtles
 n_turtles
 1
 65
-5.0
+10.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+794
+110
+966
+143
+column
+column
+2
+5
+2.0
 1
 1
 NIL
 HORIZONTAL
 
 BUTTON
-752
-242
-815
-275
+799
+205
+863
+238
+Setup
+setup
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+TEXTBOX
+801
+14
+951
+33
+Setup del mondo
+15
+0.0
+1
+
+TEXTBOX
+804
+172
+954
+191
+Bottoni setup e go\n
+15
+0.0
+1
+
+BUTTON
+881
+205
+944
+238
 Go
 go
 T
@@ -542,26 +584,40 @@ NIL
 NIL
 1
 
-MONITOR
-975
-25
-1076
-70
-Number of chair
-count patches with [pcolor = blue]
-17
+SLIDER
+1094
+62
+1266
+95
+distanza_min
+distanza_min
 1
-11
+10
+10.0
+1
+1
+NIL
+HORIZONTAL
+
+TEXTBOX
+1100
+18
+1250
+56
+Parametri per modifica movimento\n
+15
+0.0
+1
 
 SLIDER
-752
-102
-924
-135
-min_dis_stage
-min_dis_stage
+1095
+109
+1267
+142
+peso_palco
+peso_palco
 1
-5
+15
 1.0
 1
 1
@@ -569,79 +625,58 @@ NIL
 HORIZONTAL
 
 SLIDER
-751
-183
-923
-216
-min-distance-neigh
-min-distance-neigh
+1094
+163
+1266
+196
+peso_vicini
+peso_vicini
 0
-6
-6.0
+15
+15.0
 1
 1
 NIL
 HORIZONTAL
 
-SLIDER
-752
-145
-924
-178
-column
-column
-2
-5
-5.0
-1
-1
+BUTTON
+799
+258
+911
+291
+Aggiungi turtle
+add_turtle
 NIL
-HORIZONTAL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
 
 MONITOR
-973
-89
-1143
-134
-Distance between neighbors
-dist-neigh
+1099
+233
+1182
+278
+Persone
+count turtles
 17
 1
 11
 
-BUTTON
-807
-332
-932
-365
-Controlla turtle 0
-inspect turtle 0\n
-NIL
+MONITOR
+1101
+299
+1158
+344
+Sedie
+count patches with [pcolor = blue]
+17
 1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-BUTTON
-763
-384
-997
-417
-NIL
-show [nearest-neighbor] of turtle 0
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
+11
 
 @#$#@#$#@
 ## WHAT IS IT?
