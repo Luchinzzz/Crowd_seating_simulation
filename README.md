@@ -9,7 +9,7 @@ Netlogo project for Artificial Intelligent Systems-Intelligent Models exam.
 
 
 ## :books: Description
-Tha goal of the project is to simulate the behavior of a group of people in a theater. It allows to check the actual positioning of people on a set of chairs facing a stage.\
+The goal of the project is to simulate the behavior of a group of people in a theater. It allows to check the actual positioning of people on a set of chairs facing a stage.\
 Rules:
 * attraction to the stage
 * minimum distance from the stage
