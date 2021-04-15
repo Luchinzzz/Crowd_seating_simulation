@@ -240,8 +240,6 @@ to add_turtle
       let spawn-point  patches with [pycor <= -14 and pycor > -18 ]
       move-to-empty-one-of spawn-point
       set goal min-one-of patches with [available = true] [attraction]
-      ;ask goal [set booked true]
-
       set label who
       set label-color black
     ]
