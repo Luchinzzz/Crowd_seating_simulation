@@ -509,7 +509,7 @@ n_turtles
 n_turtles
 1
 65
-10.0
+30.0
 1
 1
 NIL
@@ -593,7 +593,7 @@ distanza_min
 distanza_min
 1
 10
-10.0
+4.0
 1
 1
 NIL
@@ -617,7 +617,7 @@ SLIDER
 peso_palco
 peso_palco
 1
-15
+50
 1.0
 1
 1
@@ -632,8 +632,8 @@ SLIDER
 peso_vicini
 peso_vicini
 0
-15
-15.0
+50
+50.0
 1
 1
 NIL
@@ -674,6 +674,17 @@ MONITOR
 344
 Sedie
 count patches with [pcolor = blue]
+17
+1
+11
+
+MONITOR
+1101
+363
+1194
+408
+Number of tick
+ticks
 17
 1
 11
