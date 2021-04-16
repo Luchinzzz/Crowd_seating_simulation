@@ -112,9 +112,8 @@ to set-up-world
    ask stage [ set plabel "STAGE" ]
 
 
-  ;inizializzazione indice di attrazione e file
+  ;inizializzazione file
   let i 8
-  ;let lcl 1.25
   ask patches[
     while[-8 <= i] [
 
@@ -141,28 +140,8 @@ to set-up-world
     set available true
   ]
 
-  let m 0
-  let a 8
-  let lcl 1.25
-  while [ -8 <= a][
-    ifelse column = 5
-    [set m -10]
-    [set m -12]
-
-    while[m <= 12 ][
-      ask patches with [ pxcor = m
-        and pycor = a
-      ]
-      [ set attraction lcl]
-      set m m + column
-      set dist-neigh column - 1
-    ]
-    set lcl lcl - 0.25
-    set a a - 4
-  ]
-
   let n 7
-  set m 0
+  let m 0
   ;inizializza i colori degli schienali
   while [ -9 <= n][
     ifelse column = 5
@@ -492,8 +471,8 @@ GRAPHICS-WINDOW
 18
 -18
 18
-0
-0
+1
+1
 1
 ticks
 30.0
@@ -507,7 +486,7 @@ n_turtles
 n_turtles
 1
 65
-30.0
+10.0
 1
 1
 NIL
@@ -589,10 +568,10 @@ SLIDER
 95
 distanza_min
 distanza_min
-1
+0
 10
 4.0
-1
+2
 1
 NIL
 HORIZONTAL
@@ -631,7 +610,7 @@ peso_vicini
 peso_vicini
 0
 50
-50.0
+0.0
 1
 1
 NIL
