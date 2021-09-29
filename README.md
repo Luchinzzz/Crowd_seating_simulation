@@ -5,7 +5,9 @@ Netlogo project for Artificial Intelligent Systems-Intelligent Models exam.
 * [How to use](#how-to-use)
 * [Setup](#setup)
 * [Technologies](#technologies)
+* [Bibliography](#bibliography)
 * [License](#license)
+
 
 
 ## :books: Description <a name="description"/>
@@ -41,7 +43,13 @@ To run this project, download Netlogo software or upload the project in Netlogo 
 Project is created with:
 * [Netlogo](https://ccl.northwestern.edu/netlogo/index.shtml)
 
+## Bibliography <a name="bibliography"/>
+
+For the A * star code I took inspiration from:
+*  F. Sancho Caparrini, (2018, 16 October). "A General A* Solver in NetLogo". [link](http://www.cs.us.es/~fsancho/?e=131)
+* "Models of the course Artificial Intelligence", [Github page](https://github.com/fsancho/IA)
 
 ## :balance_scale: License <a name="license"/>
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE) file for details
+
 
