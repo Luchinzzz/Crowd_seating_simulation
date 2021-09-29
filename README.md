@@ -43,7 +43,7 @@ To run this project, download Netlogo software or upload the project in Netlogo 
 Project is created with:
 * [Netlogo](https://ccl.northwestern.edu/netlogo/index.shtml)
 
-## Bibliography <a name="bibliography"/>
+## :black_nib: Bibliography <a name="bibliography"/>
 
 For the A * star code I took inspiration from:
 *  F. Sancho Caparrini, (2018, 16 October). "A General A* Solver in NetLogo". [link](http://www.cs.us.es/~fsancho/?e=131)
